@@ -155,7 +155,7 @@ def text2image_ldm(
     
     model.scheduler.set_timesteps(num_inference_steps)
     for t in tqdm(model.scheduler.timesteps):
-        latents = diffusion_step(model, controller, latents, context, t, guidance_scale, tokenizer, prompt)
+        latents = diffusion_step(model, controller, latents, context, t, guidance_scale, tokenizer=tokenizer, prompts=prompt)
     
     image = latent2image(model.vqvae, latents)
    
