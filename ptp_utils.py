@@ -79,9 +79,6 @@ def normalize_attention(A):
     return (A - min_val) / (max_val - min_val)
 
 def diffusion_step(model, controller, latents, context, t, guidance_scale, low_resource=False, tokenizer=None, prompts=None, select=0):
-    # print("tokenizer", tokenizer, type(tokenizer))
-    # print("prompts arr, select", prompts, select)
-    # print("prompts, select", prompts[select], type(prompts[select]))
     tokens = tokenizer.encode(prompts[select])
     decoder = tokenizer.decode
     if low_resource:
@@ -93,17 +90,20 @@ def diffusion_step(model, controller, latents, context, t, guidance_scale, low_r
         noise_pred_uncond, noise_prediction_text = noise_pred.chunk(2)
 
     cross_attention = get_attention_maps(controller, 16, ["up", "down"], prompts, select)
+    print("cross_attention", cross_attention, cross_attention.shape)
     s = 10
     images = []
     # Athresh = normalize(sigmoid(s·(normalize(A)−0.5))) for cross attention of each token
     for k in range(len(tokens)):
+        print("cross_attention[:, :, k]", cross_attention[:, :, k], cross_attention[:, :, k].shape)
         image = normalize_attention(torch.sigmoid(s * (normalize_attention(cross_attention[:, :, k]) - 0.5)))
+        print("image", image, image.shape)
         image = image.unsqueeze(-1).expand(*image.shape, 3)
         image = image.numpy().astype(np.uint8)
         image = np.array(Image.fromarray(image).resize((256, 256)))
         image = text_under_image(image, decoder(int(tokens[k])))
         images.append(image)
-    view_images(np.stack(images, axis=0))
+    # view_images(np.stack(images, axis=0))
     
     noise_pred = noise_pred_uncond + guidance_scale * (noise_prediction_text - noise_pred_uncond)
     latents = model.scheduler.step(noise_pred, t, latents)["prev_sample"]
