@@ -138,6 +138,9 @@ def text2image_ldm(
     latent: Optional[torch.FloatTensor] = None,
     tokenizer = None
 ):
+    print(tokenizer)
+    print(prompt)
+    print(prompt[0])
     register_attention_control(model, controller)
     height = width = 256
     batch_size = len(prompt)
