@@ -90,7 +90,7 @@ def diffusion_step(model, controller, latents, context, t, guidance_scale, low_r
         noise_pred_uncond, noise_prediction_text = noise_pred.chunk(2)
 
     cross_attention = get_attention_maps(controller, 16, ["up", "down"], prompts, select)
-    print("cross_attention", cross_attention, cross_attention.shape)
+    print("cross_attention", cross_attention.shape, len(tokens))
     s = 10
     images = []
     # Athresh = normalize(sigmoid(s·(normalize(A)−0.5))) for cross attention of each token
