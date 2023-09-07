@@ -19,6 +19,7 @@ import cv2
 from typing import Optional, Union, Tuple, List, Callable, Dict
 from IPython.display import display
 from tqdm.notebook import tqdm
+import sys
 
 
 def text_under_image(image: np.ndarray, text: str, text_color: Tuple[int, int, int] = (0, 0, 0)):
@@ -56,7 +57,8 @@ def view_images(images, num_rows=1, offset_ratio=0.02):
         for j in range(num_cols):
             image_[i * (h + offset): i * (h + offset) + h:, j * (w + offset): j * (w + offset) + w] = images[
                 i * num_cols + j]
-
+    print("image_", image_.shape, image_)
+    sys.exit()
     pil_img = Image.fromarray(image_)
     display(pil_img)
 
@@ -103,7 +105,7 @@ def diffusion_step(model, controller, latents, context, t, guidance_scale, low_r
         image = np.array(Image.fromarray(image).resize((256, 256)))
         image = text_under_image(image, decoder(int(tokens[k])))
         images.append(image)
-    # view_images(np.stack(images, axis=0))
+    view_images(np.stack(images, axis=0))
     
     noise_pred = noise_pred_uncond + guidance_scale * (noise_prediction_text - noise_pred_uncond)
     latents = model.scheduler.step(noise_pred, t, latents)["prev_sample"]
