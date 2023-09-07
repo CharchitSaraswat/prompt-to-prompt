@@ -79,6 +79,10 @@ def normalize_attention(A):
     return (A - min_val) / (max_val - min_val)
 
 def diffusion_step(model, controller, latents, context, t, guidance_scale, low_resource=False, tokenizer=None, prompts=None, select=0):
+    print(tokenizer)
+    print(type(tokenizer))
+    print(prompts, select)
+    print(prompts[select], type(prompts[select]))
     tokens = tokenizer.encode(prompts[select])
     decoder = tokenizer.decode
     if low_resource:
@@ -138,9 +142,6 @@ def text2image_ldm(
     latent: Optional[torch.FloatTensor] = None,
     tokenizer = None
 ):
-    print(tokenizer)
-    print(prompt)
-    print(prompt[0])
     register_attention_control(model, controller)
     height = width = 256
     batch_size = len(prompt)
