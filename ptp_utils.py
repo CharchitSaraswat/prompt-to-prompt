@@ -99,6 +99,7 @@ def diffusion_step(model, controller, latents, context, t, guidance_scale, low_r
     for k in range(len(tokens)):
         print("cross_attention[:, :, k]", cross_attention[:, :, k], cross_attention[:, :, k].shape)
         image = normalize_attention(torch.sigmoid(s * (normalize_attention(cross_attention[:, :, k]) - 0.5)))
+        image = 255 * image / image.max()
         print("image", image, image.shape)
         image = image.unsqueeze(-1).expand(*image.shape, 3)
         image = image.numpy().astype(np.uint8)
