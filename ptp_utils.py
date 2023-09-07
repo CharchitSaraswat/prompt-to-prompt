@@ -79,9 +79,9 @@ def normalize_attention(A):
     return (A - min_val) / (max_val - min_val)
 
 def diffusion_step(model, controller, latents, context, t, guidance_scale, low_resource=False, tokenizer=None, prompts=None, select=0):
-    print("tokenizer", tokenizer, type(tokenizer))
-    print("prompts arr, select", prompts, select)
-    print("prompts, select", prompts[select], type(prompts[select]))
+    # print("tokenizer", tokenizer, type(tokenizer))
+    # print("prompts arr, select", prompts, select)
+    # print("prompts, select", prompts[select], type(prompts[select]))
     tokens = tokenizer.encode(prompts[select])
     decoder = tokenizer.decode
     if low_resource:
@@ -101,7 +101,7 @@ def diffusion_step(model, controller, latents, context, t, guidance_scale, low_r
         image = image.unsqueeze(-1).expand(*image.shape, 3)
         image = image.numpy().astype(np.uint8)
         image = np.array(Image.fromarray(image).resize((256, 256)))
-        image = text_under_image(image, decoder(int(tokens[i])))
+        image = text_under_image(image, decoder(int(tokens[k])))
         images.append(image)
     view_images(np.stack(images, axis=0))
     
