@@ -60,8 +60,27 @@ def view_images(images, num_rows=1, offset_ratio=0.02):
     pil_img = Image.fromarray(image_)
     display(pil_img)
 
+def get_attention_maps(attention, res, from_where, prompts, select):
+    attention_maps = attention.get_average_attention()
+    out = []
+    num_pixels = res * res
+    for location in from_where:
+        for item in attention_maps[f"{location}_cross"]:
+            if item.shape[1] == num_pixels:
+                cross_maps = item.reshape(len(prompts), -1, res, res, item.shape[-1])[select]
+                out.append(cross_maps)
+    out = torch.cat(out, dim=0)
+    out = out.sum(0) / out.shape[0]
+    return out.cpu()
 
-def diffusion_step(model, controller, latents, context, t, guidance_scale, low_resource=False):
+def normalize_attention(A):
+    min_val = torch.min(A)
+    max_val = torch.max(A)
+    return (A - min_val) / (max_val - min_val)
+
+def diffusion_step(model, controller, latents, context, t, guidance_scale, low_resource=False, tokenizer=None, prompts=None, select=0):
+    tokens = tokenizer.encode(prompts[select])
+    decoder = tokenizer.decode
     if low_resource:
         noise_pred_uncond = model.unet(latents, t, encoder_hidden_states=context[0])["sample"]
         noise_prediction_text = model.unet(latents, t, encoder_hidden_states=context[1])["sample"]
@@ -69,6 +88,20 @@ def diffusion_step(model, controller, latents, context, t, guidance_scale, low_r
         latents_input = torch.cat([latents] * 2)
         noise_pred = model.unet(latents_input, t, encoder_hidden_states=context)["sample"]
         noise_pred_uncond, noise_prediction_text = noise_pred.chunk(2)
+
+    cross_attention = get_attention_maps(controller, 16, ["up", "down"], prompts, select)
+    s = 10
+    images = []
+    # Athresh = normalize(sigmoid(s·(normalize(A)−0.5))) for cross attention of each token
+    for k in range(len(tokens)):
+        image = normalize_attention(torch.sigmoid(s * (normalize_attention(cross_attention[:, :, k]) - 0.5)))
+        image = image.unsqueeze(-1).expand(*image.shape, 3)
+        image = image.numpy().astype(np.uint8)
+        image = np.array(Image.fromarray(image).resize((256, 256)))
+        image = text_under_image(image, decoder(int(tokens[i])))
+        images.append(image)
+    view_images(np.stack(images, axis=0))
+    
     noise_pred = noise_pred_uncond + guidance_scale * (noise_prediction_text - noise_pred_uncond)
     latents = model.scheduler.step(noise_pred, t, latents)["prev_sample"]
     latents = controller.step_callback(latents)
@@ -103,6 +136,7 @@ def text2image_ldm(
     guidance_scale: Optional[float] = 7.,
     generator: Optional[torch.Generator] = None,
     latent: Optional[torch.FloatTensor] = None,
+    tokenizer = None
 ):
     register_attention_control(model, controller)
     height = width = 256
@@ -118,7 +152,7 @@ def text2image_ldm(
     
     model.scheduler.set_timesteps(num_inference_steps)
     for t in tqdm(model.scheduler.timesteps):
-        latents = diffusion_step(model, controller, latents, context, t, guidance_scale)
+        latents = diffusion_step(model, controller, latents, context, t, guidance_scale, tokenizer, prompt)
     
     image = latent2image(model.vqvae, latents)
    
