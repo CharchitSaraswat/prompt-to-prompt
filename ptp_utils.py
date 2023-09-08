@@ -108,8 +108,8 @@ def diffusion_step(model, controller, latents, context, t, guidance_scale, low_r
     images = []
     # Athresh = normalize(sigmoid(s·(normalize(A)−0.5))) for cross attention of each token
     for k in range(len(tokens)):
-        image = normalize_attention(torch.sigmoid(s * (normalize_attention(cross_attention[:, :, k]) - 0.5)))
-        image = 255 * image / image.max()
+        image = 255 * normalize_attention(torch.sigmoid(s * (normalize_attention(cross_attention[:, :, k]) - 0.5)))
+        # image = 255 * image / image.max()
         image = image.unsqueeze(-1).expand(*image.shape, 3)
         image = image.numpy().astype(np.uint8)
         image = np.array(Image.fromarray(image).resize((256, 256)))
