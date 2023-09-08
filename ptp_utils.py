@@ -61,18 +61,18 @@ def view_images(images, num_rows=1, offset_ratio=0.02):
     pil_img = Image.fromarray(image_)
     display(pil_img)
 
-# def get_attention_maps(attention, res, from_where, prompts, select):
-#     attention_maps = attention.get_average_attention()
-#     out = []
-#     num_pixels = res * res
-#     for location in from_where:
-#         for item in attention_maps[f"{location}_cross"]:
-#             if item.shape[1] == num_pixels:
-#                 cross_maps = item.reshape(len(prompts), -1, res, res, item.shape[-1])[select]
-#                 out.append(cross_maps)
-#     out = torch.cat(out, dim=0)
-#     out = out.sum(0) / out.shape[0]
-#     return out.cpu()
+def get_attention_maps(attention, res, from_where, prompts, select):
+    attention_maps = attention.get_average_attention()
+    out = []
+    num_pixels = res * res
+    for location in from_where:
+        for item in attention_maps[f"{location}_cross"]:
+            if item.shape[1] == num_pixels:
+                cross_maps = item.reshape(len(prompts), -1, res, res, item.shape[-1])[select]
+                out.append(cross_maps)
+    out = torch.cat(out, dim=0)
+    out = out.sum(0) / out.shape[0]
+    return out.cpu()
 
 def normalize_attention(A):
     min_val = torch.min(A)
