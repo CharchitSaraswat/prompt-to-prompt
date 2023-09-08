@@ -91,18 +91,31 @@ def diffusion_step(model, controller, latents, context, t, guidance_scale, low_r
         noise_pred_uncond, noise_prediction_text = noise_pred.chunk(2)
 
     cross_attention = get_attention_maps(controller, 16, ["up", "down"], prompts, select)
-    print("cross_attention", cross_attention.shape, len(tokens))
-    s = 10
+
     images = []
-    # Athresh = normalize(sigmoid(s·(normalize(A)−0.5))) for cross attention of each token
     for k in range(len(tokens)):
-        print("cross_attention[:, :, k]", cross_attention[:, :, k], cross_attention[:, :, k].shape)
-        image = 255*(normalize_attention(torch.sigmoid(s * (normalize_attention(cross_attention[:, :, k]) - 0.5))))
+        image = cross_attention[:, :, k]
+        image = 255 * image / image.max()
         image = image.unsqueeze(-1).expand(*image.shape, 3)
         image = image.numpy().astype(np.uint8)
         image = np.array(Image.fromarray(image).resize((256, 256)))
         image = text_under_image(image, decoder(int(tokens[k])))
         images.append(image)
+    print("Before Binarization cross attention")
+    view_images(np.stack(images, axis=0))
+    
+    s = 10
+    images = []
+    # Athresh = normalize(sigmoid(s·(normalize(A)−0.5))) for cross attention of each token
+    for k in range(len(tokens)):
+        image = normalize_attention(torch.sigmoid(s * (normalize_attention(cross_attention[:, :, k]) - 0.5)))
+        image = 255 * image / image.max()
+        image = image.unsqueeze(-1).expand(*image.shape, 3)
+        image = image.numpy().astype(np.uint8)
+        image = np.array(Image.fromarray(image).resize((256, 256)))
+        image = text_under_image(image, decoder(int(tokens[k])))
+        images.append(image)
+    print("After Binarization cross attention")
     view_images(np.stack(images, axis=0))
     sys.exit()
     
