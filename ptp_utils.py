@@ -57,7 +57,7 @@ def view_images(images, num_rows=1, offset_ratio=0.02):
         for j in range(num_cols):
             image_[i * (h + offset): i * (h + offset) + h:, j * (w + offset): j * (w + offset) + w] = images[
                 i * num_cols + j]
-    print("image_", image_.shape, image_)
+    # print("image_", image_.shape, image_)
     pil_img = Image.fromarray(image_)
     display(pil_img)
 
