@@ -35,32 +35,39 @@ def text_under_image(image: np.ndarray, text: str, text_color: Tuple[int, int, i
     return img
 
 
-def view_images(images, num_rows=1, offset_ratio=0.02):
-    if type(images) is list:
-        num_empty = len(images) % num_rows
-    elif images.ndim == 4:
-        num_empty = images.shape[0] % num_rows
-    else:
-        images = [images]
-        num_empty = 0
+def view_images(images, num_rows=1, offset_ratio=0.02, centroids = None):
+        if type(images) is list:
+            num_empty = len(images) % num_rows
+        elif images.ndim == 4:
+            num_empty = images.shape[0] % num_rows
+        else:
+            images = [images]
+            num_empty = 0
 
-    empty_images = np.ones(images[0].shape, dtype=np.uint8) * 255
-    images = [image.astype(np.uint8) for image in images] + [empty_images] * num_empty
-    num_items = len(images)
+        empty_images = np.ones(images[0].shape, dtype=np.uint8) * 255
+        images = [image.astype(np.uint8) for image in images] + [empty_images] * num_empty
+        num_items = len(images)
+        h, w, c = images[0].shape
+        offset = int(h * offset_ratio)
+        num_cols = num_items // num_rows
 
-    h, w, c = images[0].shape
-    offset = int(h * offset_ratio)
-    num_cols = num_items // num_rows
-    image_ = np.ones((h * num_rows + offset * (num_rows - 1),
-                      w * num_cols + offset * (num_cols - 1), 3), dtype=np.uint8) * 255
-    for i in range(num_rows):
-        for j in range(num_cols):
-            image_[i * (h + offset): i * (h + offset) + h:, j * (w + offset): j * (w + offset) + w] = images[
-                i * num_cols + j]
-    # print("image_", image_.shape, image_)
-    pil_img = Image.fromarray(image_)
-    display(pil_img)
+        image_ = np.ones((h * num_rows + offset * (num_rows - 1),
+                            w * num_cols + offset * (num_cols - 1), 3), dtype=np.uint8) * 255
+        for i in range(num_rows):
+            for j in range(num_cols):
+                image_[i * (h + offset): i * (h + offset) + h:, j * (w + offset): j * (w + offset) + w] = images[
+                    i * num_cols + j]
+        pil_img = Image.fromarray(image_)
 
+        if centroids:
+            # Display the centroids as red dots on the images
+            draw = ImageDraw.Draw(pil_img)
+            for i in range(num_rows):
+                for j in range(num_cols):
+                    x, y = centroids[i * num_cols + j]
+                    draw.ellipse((x - 2, y - 2, x + 2, y + 2), fill='red')
+        display(pil_img)
+ 
 def get_attention_maps(attention, res, from_where, prompts, select):
     attention_maps = attention.get_average_attention()
     out = []
@@ -91,21 +98,9 @@ def diffusion_step(model, controller, latents, context, t, guidance_scale, low_r
         noise_pred_uncond, noise_prediction_text = noise_pred.chunk(2)
 
     cross_attention = get_attention_maps(controller, 16, ["up", "down"], prompts, select)
-
-    images = []
-    for k in range(len(tokens)):
-        image = cross_attention[:, :, k]
-        image = 255 * image / image.max()
-        image = image.unsqueeze(-1).expand(*image.shape, 3)
-        image = image.numpy().astype(np.uint8)
-        image = np.array(Image.fromarray(image).resize((256, 256)))
-        image = text_under_image(image, decoder(int(tokens[k])))
-        images.append(image)
-    print("Before Binarization cross attention")
-    view_images(np.stack(images, axis=0))
-    
     s = 10
     images = []
+    centroids = []
     # Athresh = normalize(sigmoid(s·(normalize(A)−0.5))) for cross attention of each token
     for k in range(len(tokens)):
         image = 255 * normalize_attention(torch.sigmoid(s * (normalize_attention(cross_attention[:, :, k]) - 0.5)))
@@ -115,8 +110,17 @@ def diffusion_step(model, controller, latents, context, t, guidance_scale, low_r
         image = np.array(Image.fromarray(image).resize((256, 256)))
         image = text_under_image(image, decoder(int(tokens[k])))
         images.append(image)
+    # Calculte the centroid for each of the tokens
+    for k in range(len(tokens)):
+        attention = image[:, :, k]
+        # centroid = (1/sum(attention))·[sum(w.attention), sum(h.attention)]
+        h, w = attention.shape
+        # centroid = (1/attention.sum()) * np.array([w*attention.sum(axis=0), h*attention.sum(axis=1)]).sum(axis=1)
+        centroid = (1/attention.sum()) * np.array([w*attention.sum(axis=0), h*attention.sum(axis=1)])
+        centroids.append(centroid)
+
     print("After Binarization cross attention")
-    view_images(np.stack(images, axis=0))
+    view_images(images=np.stack(images, axis=0),centroids=centroids)
     
     noise_pred = noise_pred_uncond + guidance_scale * (noise_prediction_text - noise_pred_uncond)
     latents = model.scheduler.step(noise_pred, t, latents)["prev_sample"]
