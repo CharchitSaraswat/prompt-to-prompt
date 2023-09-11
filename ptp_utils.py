@@ -110,8 +110,8 @@ def diffusion_step(model, controller, latents, context, t, guidance_scale, low_r
         h, w = image.shape
         weighted_sum_w = np.sum(image * np.arange(w, dtype=np.float32).reshape(1, -1), axis=1)
         weighted_sum_h = np.sum(image * np.arange(h, dtype=np.float32).reshape(-1, 1), axis=0)
-        centroid_x = np.sum(weighted_sum_w) / np.sum(attention_scores_k)
-        centroid_y = np.sum(weighted_sum_h) / np.sum(attention_scores_k)
+        centroid_x = np.sum(weighted_sum_w) / np.sum(image)
+        centroid_y = np.sum(weighted_sum_h) / np.sum(image)
         centroids.append([centroid_x.item(), centroid_y.item()])
         image = text_under_image(image, decoder(int(tokens[k])))
         images.append(image)        
