@@ -24,7 +24,6 @@ import sys
 
 def text_under_image(image: np.ndarray, text: str, text_color: Tuple[int, int, int] = (0, 0, 0)):
     h, w, c = image.shape
-    print("original image size", h, w, c)
     offset = int(h * .2)
     img = np.ones((h + offset, w, c), dtype=np.uint8) * 255
     font = cv2.FONT_HERSHEY_SIMPLEX
@@ -33,7 +32,6 @@ def text_under_image(image: np.ndarray, text: str, text_color: Tuple[int, int, i
     textsize = cv2.getTextSize(text, font, 1, 2)[0]
     text_x, text_y = (w - textsize[0]) // 2, h + offset - textsize[1] // 2
     cv2.putText(img, text, (text_x, text_y ), font, 1, text_color, 2)
-    print("size after adding text", img.shape)
     return img
 
 
@@ -100,7 +98,6 @@ def diffusion_step(model, controller, latents, context, t, guidance_scale, low_r
         noise_pred_uncond, noise_prediction_text = noise_pred.chunk(2)
 
     cross_attention = get_attention_maps(controller, 16, ["up", "down"], prompts, select)
-    print("cross attention shape", cross_attention.shape)
     s = 10
     images = []
     centroids = []
@@ -114,7 +111,8 @@ def diffusion_step(model, controller, latents, context, t, guidance_scale, low_r
         images.append(image)
     # Calculte the centroid for each of the tokens
     for k in range(len(tokens)):
-        attention_scores_k = cross_attention[:, :, k]  # Shape: (16, 16)
+        attention_scores_k = images[k]  # Shape: (16, 16)
+        print("attention_scores_k", attention_scores_k.shape)
         h, w = attention_scores_k.shape
 
         # Calculate the weighted sums
