@@ -106,7 +106,6 @@ def diffusion_step(model, controller, latents, context, t, guidance_scale, low_r
     # Athresh = normalize(sigmoid(s·(normalize(A)−0.5))) for cross attention of each token
     for k in range(len(tokens)):
         image = 255 * normalize_attention(torch.sigmoid(s * (normalize_attention(cross_attention[:, :, k]) - 0.5)))
-        # image = 255 * image / image.max()
         image = image.unsqueeze(-1).expand(*image.shape, 3)
         image = image.numpy().astype(np.uint8)
         image = np.array(Image.fromarray(image).resize((256, 256)))
@@ -114,13 +113,10 @@ def diffusion_step(model, controller, latents, context, t, guidance_scale, low_r
         images.append(image)
     # Calculte the centroid for each of the tokens
     for k in range(len(tokens)):
-        attention = images[k]
-        # centroid = (1/sum(attention))·[sum(w.attention), sum(h.attention)]
-        h, w, _ = attention.shape
-        h -= int(h * .2)
-        attention = attention[ : h, :, :]
-        # centroid = (1/attention.sum()) * np.array([w*attention.sum(axis=0), h*attention.sum(axis=1)]).sum(axis=1)
-        centroid = (1/attention.sum()) * np.array([w*attention.sum(axis=0), h*attention.sum(axis=1)])
+        attention = cross_attention[:, :, k]
+        print("attention shape", attention.shape)
+        h, w = attention.shape
+        centroid = (1/attention.sum()) * np.array([w*attention.sum(), h*attention.sum()])
         centroids.append(centroid)
     print("centroids", centroids, np.array(centroids).shape, len(tokens), tokens)
 
