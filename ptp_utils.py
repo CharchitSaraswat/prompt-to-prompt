@@ -117,10 +117,12 @@ def diffusion_step(model, controller, latents, context, t, guidance_scale, low_r
         attention = images[k]
         # centroid = (1/sum(attention))·[sum(w.attention), sum(h.attention)]
         h, w, _ = attention.shape
+        h -= int(h * .2)
+        attention = attention[ : h, :, :]
         # centroid = (1/attention.sum()) * np.array([w*attention.sum(axis=0), h*attention.sum(axis=1)]).sum(axis=1)
         centroid = (1/attention.sum()) * np.array([w*attention.sum(axis=0), h*attention.sum(axis=1)])
         centroids.append(centroid)
-    print("centroids", centroids.shape, len(tokens), tokens)
+    print("centroids", centroids, np.array(centroids).shape, len(tokens), tokens)
 
     print("After Binarization cross attention")
     view_images(images=np.stack(images, axis=0),centroids=centroids)
