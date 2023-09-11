@@ -107,25 +107,14 @@ def diffusion_step(model, controller, latents, context, t, guidance_scale, low_r
         image = image.unsqueeze(-1).expand(*image.shape, 3)
         image = image.numpy().astype(np.uint8)
         image = np.array(Image.fromarray(image).resize((256, 256)))
-        image = text_under_image(image, decoder(int(tokens[k])))
-        images.append(image)
-    # Calculte the centroid for each of the tokens
-    for k in range(len(tokens)):
-        attention_scores_k = images[k]  # Shape: (16, 16)
-        h, w, _ = attention_scores_k.shape
-        h -= int(h * 0.2)
-        attention_scores_k = attention_scores_k[:h, :w, :]
-
-        # Calculate the weighted sums
-        weighted_sum_w = np.sum(attention_scores_k * np.arange(16, dtype=np.float32).reshape(1, -1), axis=1)
-        weighted_sum_h = np.sum(attention_scores_k * np.arange(16, dtype=np.float32).reshape(-1, 1), axis=0)
-        print("weighted_sum_w", weighted_sum_w.shape)
-        print("weighted_sum_h", weighted_sum_h.shape)
-
-        # Calculate the centroid
+        h, w = image.shape
+        weighted_sum_w = np.sum(image * np.arange(w, dtype=np.float32).reshape(1, -1), axis=1)
+        weighted_sum_h = np.sum(image * np.arange(h, dtype=np.float32).reshape(-1, 1), axis=0)
         centroid_x = np.sum(weighted_sum_w) / np.sum(attention_scores_k)
         centroid_y = np.sum(weighted_sum_h) / np.sum(attention_scores_k)
         centroids.append([centroid_x.item(), centroid_y.item()])
+        image = text_under_image(image, decoder(int(tokens[k])))
+        images.append(image)        
 
     print("centroids", centroids, np.array(centroids).shape, len(tokens), tokens)
 
