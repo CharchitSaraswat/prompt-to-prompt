@@ -117,16 +117,13 @@ def diffusion_step(model, controller, latents, context, t, guidance_scale, low_r
         attention_scores_k = cross_attention[:, :, k]  # Shape: (16, 16)
         h, w = attention_scores_k.shape
 
-        # Sum the attention scores over h and w dimensions
-        sum_attention = torch.sum(attention_scores_k, dim=(0, 1))
-
         # Calculate the weighted sums
-        weighted_sum_w = torch.sum(torch.arange(w, dtype=torch.float32) * attention_scores_k, dim=(0, 1))
-        weighted_sum_h = torch.sum(torch.arange(h, dtype=torch.float32).reshape(1, -1) * attention_scores_k, dim=(0, 1))
+        weighted_sum_w = torch.sum(attention_scores_k * torch.arange(w, dtype=torch.float32).reshape(1, -1), dim=1)
+        weighted_sum_h = torch.sum(attention_scores_k * torch.arange(h, dtype=torch.float32).reshape(-1, 1), dim=0)
 
         # Calculate the centroid
-        centroid_x = torch.sum(weighted_sum_w) / torch.sum(sum_attention)
-        centroid_y = torch.sum(weighted_sum_h) / torch.sum(sum_attention)
+        centroid_x = torch.sum(weighted_sum_w) / torch.sum(attention_scores_k)
+        centroid_y = torch.sum(weighted_sum_h) / torch.sum(attention_scores_k)
         centroids.append([centroid_x.item(), centroid_y.item()])
 
     print("centroids", centroids, np.array(centroids).shape, len(tokens), tokens)
