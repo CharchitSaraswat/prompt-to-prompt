@@ -60,7 +60,7 @@ def view_images(images, num_rows=1, offset_ratio=0.02, centroids = None):
         pil_img = Image.fromarray(image_)
 
         if centroids:
-            # Display the centroids as red dots on the images
+            # Display the centroids as red dots on the corresponding images
             draw = ImageDraw.Draw(pil_img)
             for i in range(num_rows):
                 for j in range(num_cols):
@@ -112,12 +112,15 @@ def diffusion_step(model, controller, latents, context, t, guidance_scale, low_r
     # Calculte the centroid for each of the tokens
     for k in range(len(tokens)):
         attention_scores_k = images[k]  # Shape: (16, 16)
-        print("attention_scores_k", attention_scores_k.shape)
-        h, w = attention_scores_k.shape
+        h, w, _ = attention_scores_k.shape
+        h -= int(h * 0.2)
+        attention_scores_k = attention_scores_k[:h, :w, :]
 
         # Calculate the weighted sums
         weighted_sum_w = torch.sum(attention_scores_k * torch.arange(w, dtype=torch.float32).reshape(1, -1), dim=1)
         weighted_sum_h = torch.sum(attention_scores_k * torch.arange(h, dtype=torch.float32).reshape(-1, 1), dim=0)
+        print("weighted_sum_w", weighted_sum_w.shape)
+        print("weighted_sum_h", weighted_sum_h.shape)
 
         # Calculate the centroid
         centroid_x = torch.sum(weighted_sum_w) / torch.sum(attention_scores_k)
