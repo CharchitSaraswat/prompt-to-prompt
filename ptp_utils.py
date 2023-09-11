@@ -57,15 +57,19 @@ def view_images(images, num_rows=1, offset_ratio=0.02, centroids = None):
             for j in range(num_cols):
                 image_[i * (h + offset): i * (h + offset) + h:, j * (w + offset): j * (w + offset) + w] = images[
                     i * num_cols + j]
+                if centroids:
+                    # Draw centroid on image_[i * (h + offset): i * (h + offset) + h:, j * (w + offset): j * (w + offset) + w] from coordinates x-2, y-2 to x+2, y+2 in red
+                    x, y = centroids[i * num_cols + j]
+                    image_[i * (h + offset) + int(h/2) - 2: i * (h + offset) + int(h/2) + 2, j * (w + offset) + int(w/2) - 2: j * (w + offset) + int(w/2) + 2] = [255, 0, 0]
         pil_img = Image.fromarray(image_)
 
-        if centroids:
-            # Display the centroids as red dots on the corresponding images
-            draw = ImageDraw.Draw(pil_img)
-            for i in range(num_rows):
-                for j in range(num_cols):
-                    x, y = centroids[i * num_cols + j]
-                    draw.ellipse((x - 2, y - 2, x + 2, y + 2), fill='red')
+        # if centroids:
+        #     # Display the centroids as red dots on the corresponding images
+        #     draw = ImageDraw.Draw(pil_img)
+        #     for i in range(num_rows):
+        #         for j in range(num_cols):
+        #             x, y = centroids[i * num_cols + j]
+        #             draw.ellipse((x - 2, y - 2, x + 2, y + 2), fill='red')
         display(pil_img)
  
 def get_attention_maps(attention, res, from_where, prompts, select):
