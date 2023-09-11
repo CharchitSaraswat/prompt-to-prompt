@@ -112,7 +112,7 @@ def diffusion_step(model, controller, latents, context, t, guidance_scale, low_r
         images.append(image)
     # Calculte the centroid for each of the tokens
     for k in range(len(tokens)):
-        attention = images[:, :, k]
+        attention = images[k]
         # centroid = (1/sum(attention))·[sum(w.attention), sum(h.attention)]
         h, w = attention.shape
         # centroid = (1/attention.sum()) * np.array([w*attention.sum(axis=0), h*attention.sum(axis=1)]).sum(axis=1)
