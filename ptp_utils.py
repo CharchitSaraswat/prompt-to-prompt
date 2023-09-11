@@ -24,6 +24,7 @@ import sys
 
 def text_under_image(image: np.ndarray, text: str, text_color: Tuple[int, int, int] = (0, 0, 0)):
     h, w, c = image.shape
+    print("original image size", h, w, c)
     offset = int(h * .2)
     img = np.ones((h + offset, w, c), dtype=np.uint8) * 255
     font = cv2.FONT_HERSHEY_SIMPLEX
@@ -32,6 +33,7 @@ def text_under_image(image: np.ndarray, text: str, text_color: Tuple[int, int, i
     textsize = cv2.getTextSize(text, font, 1, 2)[0]
     text_x, text_y = (w - textsize[0]) // 2, h + offset - textsize[1] // 2
     cv2.putText(img, text, (text_x, text_y ), font, 1, text_color, 2)
+    print("size after adding text", img.shape)
     return img
 
 
@@ -114,7 +116,7 @@ def diffusion_step(model, controller, latents, context, t, guidance_scale, low_r
     for k in range(len(tokens)):
         attention = images[k]
         # centroid = (1/sum(attention))·[sum(w.attention), sum(h.attention)]
-        h, w = attention.shape
+        h, w, _ = attention.shape
         # centroid = (1/attention.sum()) * np.array([w*attention.sum(axis=0), h*attention.sum(axis=1)]).sum(axis=1)
         centroid = (1/attention.sum()) * np.array([w*attention.sum(axis=0), h*attention.sum(axis=1)])
         centroids.append(centroid)
