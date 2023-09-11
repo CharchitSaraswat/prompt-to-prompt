@@ -107,7 +107,7 @@ def diffusion_step(model, controller, latents, context, t, guidance_scale, low_r
         image = image.unsqueeze(-1).expand(*image.shape, 3)
         image = image.numpy().astype(np.uint8)
         image = np.array(Image.fromarray(image).resize((256, 256)))
-        h, w = image.shape
+        h, w, _ = image.shape
         weighted_sum_w = np.sum(image * np.arange(w, dtype=np.float32).reshape(1, -1), axis=1)
         weighted_sum_h = np.sum(image * np.arange(h, dtype=np.float32).reshape(-1, 1), axis=0)
         centroid_x = np.sum(weighted_sum_w) / np.sum(image)
