@@ -114,11 +114,20 @@ def diffusion_step(model, controller, latents, context, t, guidance_scale, low_r
         images.append(image)
     # Calculte the centroid for each of the tokens
     for k in range(len(tokens)):
-        attention = cross_attention[:, :, k]
-        print("attention shape", attention.shape)
-        h, w = attention.shape
-        centroid = (1/attention.sum()) * np.array([w*attention.sum(), h*attention.sum()])
-        centroids.append(centroid)
+        attention_scores_k = cross_attention[:, :, k]  # Shape: (16, 16)
+
+        # Sum the attention scores over h and w dimensions
+        sum_attention = torch.sum(attention_scores_k, dim=(0, 1))
+
+        # Calculate the weighted sums
+        weighted_sum_w = torch.sum(torch.arange(16, dtype=torch.float32) * attention_scores_k, dim=(0, 1))
+        weighted_sum_h = torch.sum(torch.arange(16, dtype=torch.float32).reshape(1, -1) * attention_scores_k, dim=(0, 1))
+
+        # Calculate the centroid
+        centroid_x = torch.sum(weighted_sum_w) / torch.sum(sum_attention)
+        centroid_y = torch.sum(weighted_sum_h) / torch.sum(sum_attention)
+        centroids.append([centroid_x.item(), centroid_y.item()])
+
     print("centroids", centroids, np.array(centroids).shape, len(tokens), tokens)
 
     print("After Binarization cross attention")
