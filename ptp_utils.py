@@ -107,11 +107,16 @@ def diffusion_step(model, controller, latents, context, t, guidance_scale, low_r
         image = image.unsqueeze(-1).expand(*image.shape, 3)
         image = image.numpy().astype(np.uint8)
         image = np.array(Image.fromarray(image).resize((256, 256)))
-        h, w, _ = image.shape
-        weighted_sum_w = np.sum(image * np.arange(w, dtype=np.float32).reshape(1, -1), axis=1)
-        weighted_sum_h = np.sum(image * np.arange(h, dtype=np.float32).reshape(-1, 1), axis=0)
-        centroid_x = np.sum(weighted_sum_w) / np.sum(image)
-        centroid_y = np.sum(weighted_sum_h) / np.sum(image)
+        gray_image = np.mean(image, axis=2)  # Shape: (256, 256)
+        # Calculate the sum of elements in each row, weighted by 'h'
+        weighted_sum_h = np.sum(gray_image * np.arange(gray_image.shape[0], dtype=np.float32).reshape(-1, 1), axis=0)
+
+        # Calculate the sum of elements in each column, weighted by 'w'
+        weighted_sum_w = np.sum(gray_image * np.arange(gray_image.shape[1], dtype=np.float32).reshape(1, -1), axis=1)
+
+        # Calculate the centroid coordinates
+        centroid_x = np.sum(weighted_sum_w) / np.sum(gray_image)
+        centroid_y = np.sum(weighted_sum_h) / np.sum(gray_image)
         centroids.append([centroid_x.item(), centroid_y.item()])
         image = text_under_image(image, decoder(int(tokens[k])))
         images.append(image)        
