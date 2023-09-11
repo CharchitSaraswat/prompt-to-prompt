@@ -100,6 +100,7 @@ def diffusion_step(model, controller, latents, context, t, guidance_scale, low_r
         noise_pred_uncond, noise_prediction_text = noise_pred.chunk(2)
 
     cross_attention = get_attention_maps(controller, 16, ["up", "down"], prompts, select)
+    print("cross attention shape", cross_attention.shape)
     s = 10
     images = []
     centroids = []
