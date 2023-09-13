@@ -51,7 +51,7 @@ def view_images(images, num_rows=1, offset_ratio=0.02, centroids = None):
         offset = int(h * offset_ratio)
         num_cols = num_items // num_rows
 
-        image_ = np.ones((h *   + offset * (num_rows - 1),
+        image_ = np.ones((h * num_rows  + offset * (num_rows - 1),
                             w * num_cols + offset * (num_cols - 1), 3), dtype=np.uint8) * 255
         for i in range(num_rows):
             for j in range(num_cols):
