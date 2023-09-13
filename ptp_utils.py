@@ -60,10 +60,11 @@ def view_images(images, num_rows=1, offset_ratio=0.02, centroids = None):
                 if centroids:
                     # Draw centroid on image_[i * (h + offset): i * (h + offset) + h:, j * (w + offset): j * (w + offset) + w] from coordinates x-2, y-2 to x+2, y+2 in red
                     x, y = centroids[i * num_cols + j]
-                    image_[i * (h + offset) + x - 2: i * (h + offset) + x + 2, j * (w + offset) + y - 2: j * (w + offset) + y + 2] = [255, 0, 0]
+                    # Change values in image_ at coordinate range x-2, x+2, y-2, y+2 to red
+                    image_[i * (h + offset) + int(y) - 2: i * (h + offset) + int(y) + 2, j * (w + offset) + int(x) - 2: j * (w + offset) + int(x) + 2] = [255, 0, 0]
         pil_img = Image.fromarray(image_)
         display(pil_img)
- 
+
 def get_attention_maps(attention, res, from_where, prompts, select):
     attention_maps = attention.get_average_attention()
     out = []
