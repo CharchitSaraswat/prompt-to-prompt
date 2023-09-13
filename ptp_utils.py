@@ -57,6 +57,7 @@ def view_images(images, num_rows=1, offset_ratio=0.02, centroids = None):
             for j in range(num_cols):
                 image_[i * (h + offset): i * (h + offset) + h:, j * (w + offset): j * (w + offset) + w] = images[
                     i * num_cols + j]
+                print("CHECKING CENTROIDS")
                 if centroids:
                     # Draw centroid on image_[i * (h + offset): i * (h + offset) + h:, j * (w + offset): j * (w + offset) + w] from coordinates x-2, y-2 to x+2, y+2 in red
                     x, y = centroids[i * num_cols + j]
