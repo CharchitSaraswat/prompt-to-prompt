@@ -51,7 +51,7 @@ def view_images(images, num_rows=1, offset_ratio=0.02, centroids = None):
         offset = int(h * offset_ratio)
         num_cols = num_items // num_rows
 
-        image_ = np.ones((h * num_rows + offset * (num_rows - 1),
+        image_ = np.ones((h *   + offset * (num_rows - 1),
                             w * num_cols + offset * (num_cols - 1), 3), dtype=np.uint8) * 255
         for i in range(num_rows):
             for j in range(num_cols):
@@ -60,16 +60,8 @@ def view_images(images, num_rows=1, offset_ratio=0.02, centroids = None):
                 if centroids:
                     # Draw centroid on image_[i * (h + offset): i * (h + offset) + h:, j * (w + offset): j * (w + offset) + w] from coordinates x-2, y-2 to x+2, y+2 in red
                     x, y = centroids[i * num_cols + j]
-                    image_[i * (h + offset) + int(h/2) - 2: i * (h + offset) + int(h/2) + 2, j * (w + offset) + int(w/2) - 2: j * (w + offset) + int(w/2) + 2] = [255, 0, 0]
+                    image_[i * (h + offset) + x - 2: i * (h + offset) + x + 2, j * (w + offset) + y - 2: j * (w + offset) + y + 2] = [255, 0, 0]
         pil_img = Image.fromarray(image_)
-
-        # if centroids:
-        #     # Display the centroids as red dots on the corresponding images
-        #     draw = ImageDraw.Draw(pil_img)
-        #     for i in range(num_rows):
-        #         for j in range(num_cols):
-        #             x, y = centroids[i * num_cols + j]
-        #             draw.ellipse((x - 2, y - 2, x + 2, y + 2), fill='red')
         display(pil_img)
  
 def get_attention_maps(attention, res, from_where, prompts, select):
@@ -125,9 +117,6 @@ def diffusion_step(model, controller, latents, context, t, guidance_scale, low_r
         image = text_under_image(image, decoder(int(tokens[k])))
         images.append(image)        
 
-    print("centroids", centroids, np.array(centroids).shape, len(tokens), tokens)
-
-    print("After Binarization cross attention")
     view_images(images=np.stack(images, axis=0),centroids=centroids)
     
     noise_pred = noise_pred_uncond + guidance_scale * (noise_prediction_text - noise_pred_uncond)
