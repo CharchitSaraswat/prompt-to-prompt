@@ -85,22 +85,17 @@ def normalize_attention(A):
 
 def get_obj_centroid(centroids, moving_obj, tokens, tokenizer):
     token_strings = [tokenizer.decode(token_id).replace(' ', '') for token_id in tokens]
-    print("string an obj without spaces", token_strings[3], len(token_strings[3]), token_strings, moving_obj)
-
-# Find the index of the word "ball" in the tokenized input
+    # Find the index of the word "ball" in the tokenized input
     if moving_obj in token_strings:
         index = token_strings.index(moving_obj)
-        print("index of target obj", index)
         return centroids[index]
     return [None, None]
 
-def get_guidance_loss(target_pt, obj_cetroid, latents):
+def get_guidance_loss(target_pt, obj_cetroid):
     # calculate l = (target_pt - obj_cetroid) and return the gradient of l w.r.t latents
     if not obj_cetroid:
         return None
-    l = target_pt - obj_cetroid
-    gradient = torch.autograd.functional.jacobian(func=l, inputs=latents)
-    return gradient
+    return target_pt - obj_cetroid
 
 
 def diffusion_step(model, controller, latents, context, t, guidance_scale, low_resource=False, tokenizer=None, prompts=None, select=0):
@@ -142,7 +137,8 @@ def diffusion_step(model, controller, latents, context, t, guidance_scale, low_r
     target_pt = np.array([128, 200])
     moving_obj = "ball"
     obj_cetroid = get_obj_centroid(centroids, moving_obj, tokens, tokenizer)
-    guidance_loss = get_guidance_loss(target_pt, obj_cetroid, latents)
+    guidance_loss = torch.autograd.functional.jacobian(func=get_guidance_loss(target_pt, obj_cetroid), inputs=latents)
+
     print("guidance_loss.shape", guidance_loss.shape)
     print("noise_pred_uncond.shape", noise_pred_uncond.shape)
     v = 7500
