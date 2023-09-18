@@ -88,14 +88,14 @@ def get_obj_centroid(centroids, moving_obj, tokens, tokenizer):
     # Find the index of the word "ball" in the tokenized input
     if moving_obj in token_strings:
         index = token_strings.index(moving_obj)
-        return centroids[index]
-    return [None, None]
+        return torch.tensor(centroids[index])
+    return torch.tensor([None, None])
 
 def get_guidance_loss(target_pt, obj_cetroid):
     # calculate l = (target_pt - obj_cetroid) and return the gradient of l w.r.t latents
     if not obj_cetroid:
         return None
-    return target_pt - obj_cetroid
+    return torch.abs(torch.diff(target_pt - obj_cetroid))
 
 
 def diffusion_step(model, controller, latents, context, t, guidance_scale, low_resource=False, tokenizer=None, prompts=None, select=0):
@@ -134,10 +134,10 @@ def diffusion_step(model, controller, latents, context, t, guidance_scale, low_r
         images.append(image)
 
     view_images(images=np.stack(images, axis=0),centroids=centroids)
-    target_pt = np.array([128, 200])
+    target_pt = torch.tensor([128, 200])
     moving_obj = "ball"
     obj_cetroid = get_obj_centroid(centroids, moving_obj, tokens, tokenizer)
-    guidance_loss = torch.autograd.functional.jacobian(func=get_guidance_loss(target_pt, obj_cetroid), inputs=latents)
+    guidance_loss = torch.autograd.grad(outputs=get_guidance_loss(target_pt, obj_cetroid), inputs=latents)
 
     print("guidance_loss.shape", guidance_loss.shape)
     print("noise_pred_uncond.shape", noise_pred_uncond.shape)
