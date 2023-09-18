@@ -92,7 +92,7 @@ def get_obj_centroid(centroids, moving_obj, tokens, tokenizer):
     return torch.tensor([None, None])
 
 def get_guidance_loss(target_pt, obj_cetroid):
-    return torch.abs(torch.diff(target_pt - obj_cetroid))
+    return torch.abs(target_pt - obj_cetroid)
 
 
 def diffusion_step(model, controller, latents, context, t, guidance_scale, low_resource=False, tokenizer=None, prompts=None, select=0):
