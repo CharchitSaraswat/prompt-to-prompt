@@ -57,7 +57,6 @@ def view_images(images, num_rows=1, offset_ratio=0.02, centroids = None):
             for j in range(num_cols):
                 image_[i * (h + offset): i * (h + offset) + h:, j * (w + offset): j * (w + offset) + w] = images[
                     i * num_cols + j]
-                print("CHECKING CENTROIDS")
                 if centroids:
                     # Draw centroid on image_[i * (h + offset): i * (h + offset) + h:, j * (w + offset): j * (w + offset) + w] from coordinates x-2, y-2 to x+2, y+2 in red
                     x, y = centroids[i * num_cols + j]
@@ -83,6 +82,25 @@ def normalize_attention(A):
     min_val = torch.min(A)
     max_val = torch.max(A)
     return (A - min_val) / (max_val - min_val)
+
+def get_obj_centroid(centroids, moving_obj, tokens, tokenizer):
+    token_strings = [tokenizer.decode(token_id) for token_id in tokens]
+
+# Find the index of the word "ball" in the tokenized input
+    if moving_obj in token_strings:
+        index = token_strings.index(moving_obj)
+        print("index of target obj", index)
+        return centroids[index]
+    return [None, None]
+
+def get_guidance_loss(target_pt, obj_cetroid, latents):
+    # calculate l = (target_pt - obj_cetroid) and return the gradient of l w.r.t latents
+    if not obj_cetroid:
+        return None
+    l = target_pt - obj_cetroid
+    gradient = torch.autograd.functional.jacobian(func=l, inputs=latents)
+    return gradient
+
 
 def diffusion_step(model, controller, latents, context, t, guidance_scale, low_resource=False, tokenizer=None, prompts=None, select=0):
     tokens = tokenizer.encode(prompts[select])
@@ -117,11 +135,21 @@ def diffusion_step(model, controller, latents, context, t, guidance_scale, low_r
         centroid_y = np.sum(weighted_sum_h) / np.sum(gray_image)
         centroids.append([centroid_x.item(), centroid_y.item()])
         image = text_under_image(image, decoder(int(tokens[k])))
-        images.append(image)        
+        images.append(image)
 
     view_images(images=np.stack(images, axis=0),centroids=centroids)
-    
-    noise_pred = noise_pred_uncond + guidance_scale * (noise_prediction_text - noise_pred_uncond)
+    target_pt = np.array([128, 200])
+    moving_obj = "ball"
+    obj_cetroid = get_obj_centroid(centroids, moving_obj, tokens, tokenizer)
+    guidance_loss = get_guidance_loss(target_pt, obj_cetroid, latents)
+    print("guidance_loss.shape", guidance_loss.shape)
+    print("noise_pred_uncond.shape", noise_pred_uncond.shape)
+    v = 7500
+    variance = model.scheduler.get_variance(t)
+    sigma = np.sqrt(variance)
+    print("sigma", sigma)
+
+    noise_pred = noise_pred_uncond + guidance_scale * (noise_prediction_text - noise_pred_uncond) + v*sigma*guidance_loss
     latents = model.scheduler.step(noise_pred, t, latents)["prev_sample"]
     latents = controller.step_callback(latents)
     return latents
