@@ -85,6 +85,7 @@ def normalize_attention(A):
 
 def get_obj_centroid(centroids, moving_obj, tokens, tokenizer):
     token_strings = [tokenizer.decode(token_id) for token_id in tokens]
+    print("string an obj", token_strings, moving_obj)
 
 # Find the index of the word "ball" in the tokenized input
     if moving_obj in token_strings:
