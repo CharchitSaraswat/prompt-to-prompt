@@ -134,6 +134,7 @@ def diffusion_step(model, controller, latents, context, t, guidance_scale, low_r
     target_pt = torch.tensor([128, 200])
     moving_obj = "ball"
     obj_cetroid = get_obj_centroid(centroids, moving_obj, tokens, tokenizer)
+    latents.requires_grad = True
     guidance_loss = torch.autograd.grad(outputs=get_guidance_loss(target_pt, obj_cetroid), inputs=latents)
 
     print("guidance_loss.shape", guidance_loss.shape)
