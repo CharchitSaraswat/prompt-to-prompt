@@ -92,9 +92,6 @@ def get_obj_centroid(centroids, moving_obj, tokens, tokenizer):
     return torch.tensor([None, None])
 
 def get_guidance_loss(target_pt, obj_cetroid):
-    # calculate l = (target_pt - obj_cetroid) and return the gradient of l w.r.t latents
-    if not obj_cetroid:
-        return None
     return torch.abs(torch.diff(target_pt - obj_cetroid))
 
 
