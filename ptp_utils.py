@@ -138,16 +138,16 @@ def diffusion_step(model, controller, latents, context, t, guidance_scale, low_r
     moving_obj = "ball"
     obj_cetroid = get_obj_centroid(centroids, moving_obj, tokens, tokenizer)
     latents.requires_grad = True
-    guidance_loss = torch.autograd.grad(outputs=get_guidance_loss(target_pt, obj_cetroid), inputs=latents, allow_unused=True)
+    guidance_loss = torch.autograd.functional.jacobian(func=get_guidance_loss(target_pt, obj_cetroid), inputs=latents)
 
     print("guidance_loss", guidance_loss)
     print("noise_pred_uncond.shape", noise_pred_uncond.shape)
-    v = 7500
-    variance = model.scheduler.get_variance(t)
-    sigma = np.sqrt(variance)
-    print("sigma", sigma)
+    # v = 7500
+    # variance = model.scheduler.get_variance(t)
+    # sigma = np.sqrt(variance)
+    # print("sigma", sigma)
 
-    noise_pred = noise_pred_uncond + guidance_scale * (noise_prediction_text - noise_pred_uncond) + v*sigma*guidance_loss
+    noise_pred = noise_pred_uncond + guidance_scale * (noise_prediction_text - noise_pred_uncond)
     latents = model.scheduler.step(noise_pred, t, latents)["prev_sample"]
     latents = controller.step_callback(latents)
     return latents
