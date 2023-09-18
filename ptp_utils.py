@@ -88,7 +88,7 @@ def get_obj_centroid(centroids, moving_obj, tokens, tokenizer):
     # Find the index of the word "ball" in the tokenized input
     if moving_obj in token_strings:
         index = token_strings.index(moving_obj)
-        return torch.tensor(centroids[index])
+        return torch.tensor(centroids[index], requires_grad=True)
     return torch.tensor([None, None])
 
 def get_guidance_loss(target_pt, obj_cetroid):
