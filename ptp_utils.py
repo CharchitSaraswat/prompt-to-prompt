@@ -78,14 +78,14 @@ def view_images(images, num_rows=1, offset_ratio=0.02, centroids = None):
 #     out = out.sum(0) / out.shape[0]
 #     return out.cpu()
 
-def get_attention_maps(attention_store, res, from_where, select):
+def get_attention_maps(attention_store, res, from_where, prompts, select):
     out = []
     num_pixels = res * res
 
     for location in from_where:
         for item in attention_store.attention_store[f"{location}_cross"]:
             if item.shape[1] == num_pixels:
-                cross_maps = item.reshape(len(attention_store.prompts), -1, res, res, item.shape[-1])[select]
+                cross_maps = item.reshape(len(prompts), -1, res, res, item.shape[-1])[select]
                 out.append(cross_maps)
 
     out = torch.cat(out, dim=0)
