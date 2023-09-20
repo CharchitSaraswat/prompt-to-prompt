@@ -156,9 +156,9 @@ def diffusion_step(model, controller, latents, context, t, guidance_scale, low_r
     obj_cetroid.requires_grad = True
     latents.requires_grad = True
     guidance_loss = torch.autograd.grad(outputs=get_guidance_loss(target_pt, obj_cetroid), inputs=latents, allow_unused=True)
-
     print("guidance_loss", guidance_loss)
     print("noise_pred_uncond.shape", noise_pred_uncond.shape)
+    print("latents.shape", latents.shape)
     v = 7500
     variance = torch.var(noise_pred_uncond)
     sigma = torch.sqrt(variance)
