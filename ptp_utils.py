@@ -109,7 +109,8 @@ def diffusion_step(model, controller, latents, context, t, guidance_scale, low_r
         noise_pred = model.unet(latents_input, t, encoder_hidden_states=context)["sample"]
         noise_pred_uncond, noise_prediction_text = noise_pred.chunk(2)
 
-    cross_attention = get_attention_maps(controller, 16, ["up", "down"], prompts, select)
+    cross_attention = get_attention_maps(controller, 16, ["up", "down"], prompts, select) # Do not detach using get_attention_maps, use attention_store
+    print("cross_attention requires Grad", cross_attention.requires_grad)
     s = 10
     images = []
     centroids = []
@@ -134,14 +135,14 @@ def diffusion_step(model, controller, latents, context, t, guidance_scale, low_r
         images.append(image)
 
     view_images(images=np.stack(images, axis=0),centroids=centroids)
-    target_pt = torch.tensor([128, 200])
-    moving_obj = "ball"
-    obj_cetroid = get_obj_centroid(centroids, moving_obj, tokens, tokenizer)
-    latents.requires_grad = True
-    guidance_loss = torch.autograd.functional.jacobian(func=get_guidance_loss(target_pt, obj_cetroid), inputs=latents)
+    # target_pt = torch.tensor([128, 200])
+    # moving_obj = "ball"
+    # obj_cetroid = get_obj_centroid(centroids, moving_obj, tokens, tokenizer)
+    # latents.requires_grad = True
+    # guidance_loss = torch.autograd.grad(outputs=get_guidance_loss(target_pt, obj_cetroid), inputs=latents)
 
-    print("guidance_loss", guidance_loss)
-    print("noise_pred_uncond.shape", noise_pred_uncond.shape)
+    # print("guidance_loss", guidance_loss)
+    # print("noise_pred_uncond.shape", noise_pred_uncond.shape)
     # v = 7500
     # variance = model.scheduler.get_variance(t)
     # sigma = np.sqrt(variance)
