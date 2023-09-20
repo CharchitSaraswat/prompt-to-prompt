@@ -108,7 +108,7 @@ def get_obj_centroid(centroids, moving_obj, tokens, tokenizer):
 
 def get_guidance_loss(target_pt, obj_cetroid):
     # l = torch.sum(torch.abs(target_pt - obj_cetroid))
-    l = torch.abs(target_pt - obj_cetroid)
+    l = torch.abs(target_pt - obj_cetroid).sum()
     l.requires_grad = True
     print("l details", l, l.shape, l.requires_grad)
     return l
