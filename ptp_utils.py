@@ -125,7 +125,13 @@ def diffusion_step(model, controller, latents, context, t, guidance_scale, low_r
         noise_pred = model.unet(latents_input, t, encoder_hidden_states=context)["sample"]
         noise_pred_uncond, noise_prediction_text = noise_pred.chunk(2)
 
-    cross_attention = get_attention_maps(controller, 16, ["up", "down"], prompts, select) # Do not detach using get_attention_maps, use attention_store
+    # cross_attention = get_attention_maps(controller, 16, ["up", "down"], prompts, select) # Do not detach using get_attention_maps, use attention_store
+    res = 16
+    num = res * res
+    cross_attention = controller.attention_store["up_cross"]
+    if cross_attention.shape[1] == num:
+        cross_attention = cross_attention.reshape(len(prompts), -1, res, res, cross_attention.shape[-1])[select]
+    
     print("cross_attention requires Grad", cross_attention.requires_grad)
     s = 10
     images = []
@@ -134,11 +140,12 @@ def diffusion_step(model, controller, latents, context, t, guidance_scale, low_r
     for k in range(len(tokens)):
         image = 255 * normalize_attention(torch.sigmoid(s * (normalize_attention(cross_attention[:, :, k]) - 0.5)))
         image = image.unsqueeze(-1).expand(*image.shape, 3)
-        image = image.numpy().astype(np.uint8)
-        image = np.array(Image.fromarray(image).resize((256, 256)))
-        gray_image = np.mean(image, axis=2)  # Shape: (256, 256)
+        print("image shape", image.shape)
+        # image = image.numpy().astype(np.uint8)
+        # image = np.array(Image.fromarray(image).resize((256, 256)))
+        # gray_image = np.mean(image, axis=2)  # Shape: (256, 256)
         # Calculate the sum of elements in each row, weighted by 'h'
-        weighted_sum_h = np.sum(gray_image * np.arange(gray_image.shape[0], dtype=np.float32).reshape(-1, 1), axis=0)
+        weighted_sum_h = torch.sum(gray_image * torch.arange(gray_image.shape[0], dtype=torch.float32).reshape(-1, 1), axis=0)
 
         # Calculate the sum of elements in each column, weighted by 'w'
         weighted_sum_w = np.sum(gray_image * np.arange(gray_image.shape[1], dtype=np.float32).reshape(1, -1), axis=1)
