@@ -65,32 +65,31 @@ def view_images(images, num_rows=1, offset_ratio=0.02, centroids = None):
         pil_img = Image.fromarray(image_)
         display(pil_img)
 
-# def get_attention_maps(attention, res, from_where, prompts, select):
-#     attention_maps = attention.get_average_attention()
-#     out = []
-#     num_pixels = res * res
-#     for location in from_where:
-#         for item in attention_maps[f"{location}_cross"]:
-#             if item.shape[1] == num_pixels:
-#                 cross_maps = item.reshape(len(prompts), -1, res, res, item.shape[-1])[select]
-#                 out.append(cross_maps)
-#     out = torch.cat(out, dim=0)
-#     out = out.sum(0) / out.shape[0]
-#     return out.cpu()
-
-def get_attention_maps(attention_store, res, from_where, prompts, select):
+def get_attention_maps(attention, res, from_where, prompts, select):
+    attention_maps = attention.get_average_attention()
     out = []
     num_pixels = res * res
-
     for location in from_where:
-        for item in attention_store.attention_store[f"{location}_cross"]:
+        for item in attention_maps[f"{location}_cross"]:
             if item.shape[1] == num_pixels:
                 cross_maps = item.reshape(len(prompts), -1, res, res, item.shape[-1])[select]
                 out.append(cross_maps)
-
     out = torch.cat(out, dim=0)
     out = out.sum(0) / out.shape[0]
     return out
+
+# def get_attention_maps(attention_store, res, from_where, prompts, select):
+#     out = []
+#     num_pixels = res * res
+
+#     for item in attention_store.attention_store["up_cross"]:
+#         if item.shape[1] == num_pixels:
+#             cross_maps = item.reshape(len(prompts), -1, res, res, item.shape[-1])[select]
+#             out.append(cross_maps)
+
+#     out = torch.cat(out, dim=0)
+#     out = out.sum(0) / out.shape[0]
+#     return out
 
 
 def normalize_attention(A):
@@ -125,12 +124,14 @@ def diffusion_step(model, controller, latents, context, t, guidance_scale, low_r
         noise_pred = model.unet(latents_input, t, encoder_hidden_states=context)["sample"]
         noise_pred_uncond, noise_prediction_text = noise_pred.chunk(2)
 
-    # cross_attention = get_attention_maps(controller, 16, ["up", "down"], prompts, select) # Do not detach using get_attention_maps, use attention_store
-    res = 16
-    num = res * res
-    cross_attention = controller.attention_store["up_cross"]
-    if cross_attention.shape[1] == num:
-        cross_attention = cross_attention.reshape(len(prompts), -1, res, res, cross_attention.shape[-1])[select]
+    cross_attention = get_attention_maps(controller, 16, ["up", "down"], prompts, select) # Do not detach using get_attention_maps, use attention_store
+    cross_attention.requires_grad = True
+    # res = 16
+    # num = res * res
+    # attn_maps = controller.attention_store["up_cross"]
+    # for attn_map in attn_maps:
+    #     if attn_map.shape[1] == num:
+    #         attn_map = attn_map.reshape(len(prompts), -1, res, res, attn_map.shape[-1])[select]
     
     print("cross_attention requires Grad", cross_attention.requires_grad)
     s = 10
