@@ -137,7 +137,7 @@ def diffusion_step(model, controller, latents, context, t, guidance_scale, low_r
     print("a1.shape", a1.shape)
     a2 = attn_maps[-2].reshape(len(prompts), -1, res, res, attn_maps[-2].shape[-1])[select]
     print("a2.shape", a2.shape)
-    cross_attention = torch.cat(a1, a2, dim=0)
+    cross_attention = torch.cat((a1, a2), dim=0)
     print("cross_attention shape before sum", cross_attention.shape)
     cross_attention = cross_attention.sum(0) / cross_attention.shape[0]
     # cross_attention = torch.cat([attn_map for attn_map in attn_maps if attn_map.shape[1] == num], dim=0)
