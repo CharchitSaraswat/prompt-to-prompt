@@ -125,11 +125,15 @@ def diffusion_step(model, controller, latents, context, t, guidance_scale, low_r
         noise_pred = model.unet(latents_input, t, encoder_hidden_states=context)["sample"]
         noise_pred_uncond, noise_prediction_text = noise_pred.chunk(2)
 
-    cross_attention = get_attention_maps(controller, 16, ["up", "down"], prompts, select) # Do not detach using get_attention_maps, use attention_store
-    cross_attention.requires_grad = True
-    # res = 16
-    # num = res * res
-    # attn_maps = controller.attention_store["up_cross"]
+    # cross_attention = get_attention_maps(controller, 16, ["up", "down"], prompts, select) # Do not detach using get_attention_maps, use attention_store
+    # cross_attention.requires_grad = True
+    res = 16
+    num = res * res
+    attn_maps = controller.attention_store["up_cross"]
+    cross_attention = attn_maps[-2]
+    cross_attention = cross_attention.reshape(len(prompts), -1, res, res, cross_attention.shape[-1])[select]
+    print("cross_attention", cross_attention.shape)
+
     # for attn_map in attn_maps:
     #     if attn_map.shape[1] == num:
     #         attn_map = attn_map.reshape(len(prompts), -1, res, res, attn_map.shape[-1])[select]
