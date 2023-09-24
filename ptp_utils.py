@@ -131,9 +131,11 @@ def diffusion_step(model, controller, latents, context, t, guidance_scale, low_r
     num = res * res
     attn_maps = controller.attention_store["up_cross"]
     # cross_attention = attn_maps[-2]
-    # Put attention maps of last two layers together in cross_attention map if map.shape[1] == num without using a list
-    cross_attention = torch.cat([attn_map for attn_map in attn_maps if attn_map.shape[1] == num], dim=0)
-    cross_attention = cross_attention.reshape(len(prompts), -1, res, res, cross_attention.shape[-1])[select]
+    # Put attention maps of last two layers together in cross_attention map if map.shape[1] == num without using a list and reshape to (len(prompts), -1, res, res, map.shape[-1])[select] before appending to cross_attention
+    cross_attention = torch.cat([attn_map.reshape(len(prompts), -1, res, res, cross_attention.shape[-1])[select] for attn_map in attn_maps if attn_map.shape[1] == num], dim=0)
+    cross_attention = cross_attention.sum(0) / cross_attention.shape[0]
+    # cross_attention = torch.cat([attn_map for attn_map in attn_maps if attn_map.shape[1] == num], dim=0)
+    # cross_attention = cross_attention.reshape(len(prompts), -1, res, res, cross_attention.shape[-1])[select]
     print("cross_attention", cross_attention.shape)
 
     # for attn_map in attn_maps:
