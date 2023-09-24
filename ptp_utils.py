@@ -143,7 +143,8 @@ def diffusion_step(model, controller, latents, context, t, guidance_scale, low_r
         image = 255 * normalize_attention(torch.sigmoid(s * (normalize_attention(cross_attention[:, :, k]) - 0.5)))
         image = image.unsqueeze(-1).expand(*image.shape, 3)
 
-        image = F.interpolate(image.unsqueeze(0).permute(0, 3, 1, 2), size=(256, 256), mode='bilinear').squeeze().permute(1, 2, 0)
+        image = image.permute(2, 0, 1).unsqueeze(0).float()
+        image = F.interpolate(image, size=(256, 256), mode='bilinear', align_corners=False)
         image = image.to(torch.uint8)
         image = image.resize((256, 256))
         print("image", image.shape)
