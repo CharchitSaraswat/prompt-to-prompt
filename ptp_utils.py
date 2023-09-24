@@ -140,11 +140,12 @@ def diffusion_step(model, controller, latents, context, t, guidance_scale, low_r
     # Athresh = normalize(sigmoid(s·(normalize(A)−0.5))) for cross attention of each token
     for k in range(len(tokens)):
         image = 255 * normalize_attention(torch.sigmoid(s * (normalize_attention(cross_attention[:, :, k]) - 0.5)))
+        print("image_shape", image.shape)
         image = image.unsqueeze(-1).expand(*image.shape, 3)
-        image = image.numpy().astype(np.uint8)
-        image = np.array(Image.fromarray(image).resize((256, 256)))
-        gray_image = np.mean(image, axis=2)  # Shape: (256, 256)
-        # gray_image = torch.mean(image, dim=2, keepdim=False)
+        # image = image.numpy().astype(np.uint8)
+        # image = np.array(Image.fromarray(image).resize((256, 256)))
+        # gray_image = np.mean(image, axis=2)  # Shape: (256, 256)
+        gray_image = torch.mean(image, dim=2, keepdim=False)
         print("gray_image", gray_image.shape)
         # Calculate the sum of elements in each row, weighted by 'h'
         weighted_sum_h = torch.sum(gray_image * torch.arange(gray_image.shape[0], dtype=torch.float32).reshape(-1, 1), axis=0)
