@@ -181,7 +181,7 @@ def diffusion_step(model, controller, latents, context, t, guidance_scale, low_r
         images.append(image)
 
     view_images(images=np.stack(images, axis=0),centroids=centroids)
-    target_pt = torch.tensor([images.shape[0]*0.2, images.shape[1]*0.8])
+    target_pt = torch.tensor([gray_image.shape[0]*0.2, gray_image.shape[1]*0.8])
     moving_obj = "ball"
     obj_cetroid = get_obj_centroid(centroids, moving_obj, tokens, tokenizer)
     obj_cetroid.requires_grad = True
