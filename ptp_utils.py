@@ -133,11 +133,7 @@ def diffusion_step(model, controller, latents, context, t, guidance_scale, low_r
     # cross_attention = attn_maps[-2]
     # Put attention maps of last two layers together in cross_attention map if map.shape[1] == num without using a list and reshape to (len(prompts), -1, res, res, map.shape[-1])[select] before appending to cross_attention
     # cross_attention = torch.cat([attn_map.reshape(len(prompts), -1, res, res, attn_map.shape[-1])[select] for attn_map in attn_maps if attn_map.shape[1] == num], dim=0)
-    a1 = attn_maps[-1].reshape(len(prompts), -1, res, res, attn_maps[-1].shape[-1])[select]
-    print("a1.shape", a1.shape)
-    a2 = attn_maps[-2].reshape(len(prompts), -1, res, res, attn_maps[-2].shape[-1])[select]
-    print("a2.shape", a2.shape)
-    cross_attention = torch.cat((a1, a2), dim=0)
+    cross_attention = torch.cat((attn_maps[-2].reshape(len(prompts), -1, res, res, attn_maps[-2].shape[-1])[select], attn_maps[-1].reshape(len(prompts), -1, res, res, attn_maps[-1].shape[-1])[select]), dim=0)
     print("cross_attention shape before sum", cross_attention.shape)
     cross_attention = cross_attention.sum(0) / cross_attention.shape[0]
     # cross_attention = torch.cat([attn_map for attn_map in attn_maps if attn_map.shape[1] == num], dim=0)
