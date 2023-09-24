@@ -176,17 +176,21 @@ def diffusion_step(model, controller, latents, context, t, guidance_scale, low_r
         # Calculate the centroid coordinates
         centroid_x = torch.sum(weighted_sum_w) / torch.sum(gray_image)
         centroid_y = torch.sum(weighted_sum_h) / torch.sum(gray_image)
-        centroids.append([centroid_x.item(), centroid_y.item()])
+        centroid = torch.tensor([centroid_x, centroid_y])
+        centroids.append(centroid)
         image = text_under_image(image, decoder(int(tokens[k])))
         images.append(image)
 
     view_images(images=np.stack(images, axis=0),centroids=centroids)
     target_pt = torch.tensor([gray_image.shape[0]*0.2, gray_image.shape[1]*0.8])
-    moving_obj = "ball"
-    obj_cetroid = get_obj_centroid(centroids, moving_obj, tokens, tokenizer)
+    # moving_obj = "ball"
+    # obj_cetroid = get_obj_centroid(centroids, moving_obj, tokens, tokenizer)
+    obj_cetroid = centroids[3]
     obj_cetroid.requires_grad = True
     latents.requires_grad = True
-    guidance_loss = get_guidance_loss(target_pt, obj_cetroid)
+    # guidance_loss = get_guidance_loss(target_pt, obj_cetroid)
+    guidance_loss = torch.abs(target_pt - obj_cetroid).sum()
+    guidance_loss.requires_grad = True
     guidance_loss = torch.autograd.grad(outputs=guidance_loss, inputs=latents, allow_unused=True)
     print("guidance_loss", guidance_loss)
     print("noise_pred_uncond.shape", noise_pred_uncond.shape)
