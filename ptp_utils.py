@@ -197,10 +197,11 @@ def diffusion_step(model, controller, latents, context, t, guidance_scale, low_r
     # guidance_loss = torch.abs(target_pt - obj_cetroid).sum()
     print(target_pt_x, centroid_x)
     guidance_loss = torch.abs(target_pt_x.reshape(1) - centroid_x.reshape(1)).sum()
+    print("guidance_loss", guidance_loss, guidance_loss.shape)
     #guidance_loss += torch.abs(target_pt_y.reshape(1) - centroid_y.reshape(1)).sum()
     # guidance_loss.requires_grad = True
-    guidance_loss = torch.autograd.grad(outputs=guidance_loss, inputs=latents, allow_unused=True)
-    print("guidance_loss", guidance_loss)
+    g_loss = torch.autograd.grad(outputs=guidance_loss, inputs=latents, allow_unused=True)
+    print("g_loss", g_loss, g_loss.shape)
     print("noise_pred_uncond.shape", noise_pred_uncond.shape)
     print("latents.shape", latents.shape)
     v = 7500
@@ -208,7 +209,7 @@ def diffusion_step(model, controller, latents, context, t, guidance_scale, low_r
     sigma = torch.sqrt(variance)
     # print("sigma", sigma)
 
-    noise_pred = noise_pred_uncond + guidance_scale * (noise_prediction_text - noise_pred_uncond) + v*sigma*guidance_loss
+    noise_pred = noise_pred_uncond + guidance_scale * (noise_prediction_text - noise_pred_uncond) + v*sigma*g_loss
     latents = model.scheduler.step(noise_pred, t, latents)["prev_sample"]
     latents = controller.step_callback(latents)
     return latents
