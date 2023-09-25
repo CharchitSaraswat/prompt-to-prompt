@@ -176,7 +176,8 @@ def diffusion_step(model, controller, latents, context, t, guidance_scale, low_r
         # Calculate the centroid coordinates
         centroid_x = torch.sum(weighted_sum_w) / torch.sum(gray_image)
         centroid_y = torch.sum(weighted_sum_h) / torch.sum(gray_image)
-        centroid = torch.tensor([centroid_x, centroid_y])
+        print("centroid x and y shape", centroid_x.shape, centroid_y.shape)
+        centroid = torch.cat([centroid_x, centroid_y])
         centroids.append(centroid)
         image = text_under_image(image, decoder(int(tokens[k])))
         images.append(image)
