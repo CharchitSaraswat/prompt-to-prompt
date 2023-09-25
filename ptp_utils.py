@@ -146,52 +146,59 @@ def diffusion_step(model, controller, latents, context, t, guidance_scale, low_r
     
     print("cross_attention requires Grad", cross_attention.requires_grad)
     s = 10
-    images = []
-    centroids = []
+    # images = []
+    # centroids = []
     # Athresh = normalize(sigmoid(s·(normalize(A)−0.5))) for cross attention of each token
-    for k in range(len(tokens)):
-        image = 255 * normalize_attention(torch.sigmoid(s * (normalize_attention(cross_attention[:, :, k]) - 0.5)))
-        image = image.unsqueeze(-1).expand(*image.shape, 3)
+    #for k in range(len(tokens)):
+    # for k in range(3,4):
+    k = 3
+    image = 255 * normalize_attention(torch.sigmoid(s * (normalize_attention(cross_attention[:, :, k]) - 0.5)))
+    image = image.unsqueeze(-1).expand(*image.shape, 3)
 
-        # image = image.permute(2, 0, 1).unsqueeze(0).float()
-        # image = F.interpolate(image, size=(256, 256), mode='bilinear', align_corners=False)
-        # image = image.to(torch.uint8)
-        # image = image.resize((256, 256))
-        # print("image", image.shape)
-        gray_image = torch.mean(image, dim=2, keepdim=False)
-        print("gray_image", gray_image.shape)
+    # image = image.permute(2, 0, 1).unsqueeze(0).float()
+    # image = F.interpolate(image, size=(256, 256), mode='bilinear', align_corners=False)
+    # image = image.to(torch.uint8)
+    # image = image.resize((256, 256))
+    # print("image", image.shape)
+    gray_image = torch.mean(image, dim=2, keepdim=False)
+    print("gray_image", gray_image.shape)
 
-        # image = image.numpy().astype(np.uint8)
-        # image = np.array(Image.fromarray(image).resize((256, 256)))
-        # print("image", image.shape)
-        # gray_image = np.mean(image, axis=2)  # Shape: (256, 256)
-        # print("gray_image", gray_image.shape)
-        
-        # Calculate the sum of elements in each row, weighted by 'h'
-        weighted_sum_h = torch.sum(gray_image * torch.arange(gray_image.shape[0], dtype=torch.float32).reshape(-1, 1), axis=0)
+    # image = image.numpy().astype(np.uint8)
+    # image = np.array(Image.fromarray(image).resize((256, 256)))
+    # print("image", image.shape)
+    # gray_image = np.mean(image, axis=2)  # Shape: (256, 256)
+    # print("gray_image", gray_image.shape)
+    
+    # Calculate the sum of elements in each row, weighted by 'h'
+    weighted_sum_h = torch.sum(gray_image * torch.arange(gray_image.shape[0], dtype=torch.float32).reshape(-1, 1), axis=0)
 
-        # Calculate the sum of elements in each column, weighted by 'w'
-        weighted_sum_w = torch.sum(gray_image * torch.arange(gray_image.shape[1], dtype=torch.float32).reshape(1, -1), axis=1)
+    # Calculate the sum of elements in each column, weighted by 'w'
+    weighted_sum_w = torch.sum(gray_image * torch.arange(gray_image.shape[1], dtype=torch.float32).reshape(1, -1), axis=1)
 
-        # Calculate the centroid coordinates
-        centroid_x = torch.sum(weighted_sum_w) / torch.sum(gray_image)
-        centroid_y = torch.sum(weighted_sum_h) / torch.sum(gray_image)
-        print("centroid x and y shape", centroid_x.shape, centroid_y.shape)
-        centroid = torch.cat([centroid_x.reshape(1), centroid_y.reshape(1)], axis=0)
-        centroids.append(centroid)
-        image = text_under_image(image, decoder(int(tokens[k])))
-        images.append(image)
+    # Calculate the centroid coordinates
+    centroid_x = torch.sum(weighted_sum_w) / torch.sum(gray_image)
+    centroid_y = torch.sum(weighted_sum_h) / torch.sum(gray_image)
+    # print("centroid x and y shape", centroid_x.shape, centroid_y.shape)
+    # centroid = torch.cat([centroid_x.reshape(1), centroid_y.reshape(1)], axis=0)
+    # centroids.append(centroid)
+    # image = text_under_image(image, decoder(int(tokens[k])))
+    # images.append(image)
 
-    view_images(images=np.stack(images, axis=0),centroids=centroids)
-    target_pt = torch.tensor([gray_image.shape[0]*0.2, gray_image.shape[1]*0.8])
+    # view_images(images=np.stack(images, axis=0),centroids=centroids)
+    # target_pt = torch.tensor([gray_image.shape[0]*0.2, gray_image.shape[1]*0.8])
+    target_pt_x = torch.FloatTensor([4])
+    target_pt_y = torch.FloatTensor([12])
     # moving_obj = "ball"
     # obj_cetroid = get_obj_centroid(centroids, moving_obj, tokens, tokenizer)
-    obj_cetroid = centroids[3]
-    obj_cetroid.requires_grad = True
+    # obj_cetroid = centroids[3]
+    # obj_cetroid.requires_grad = True
     latents.requires_grad = True
     # guidance_loss = get_guidance_loss(target_pt, obj_cetroid)
-    guidance_loss = torch.abs(target_pt - obj_cetroid).sum()
-    guidance_loss.requires_grad = True
+    # guidance_loss = torch.abs(target_pt - obj_cetroid).sum()
+    print(target_pt_x, centroid_x)
+    guidance_loss = torch.abs(target_pt_x.reshape(1) - centroid_x.reshape(1)).sum()
+    #guidance_loss += torch.abs(target_pt_y.reshape(1) - centroid_y.reshape(1)).sum()
+    # guidance_loss.requires_grad = True
     guidance_loss = torch.autograd.grad(outputs=guidance_loss, inputs=latents, allow_unused=True)
     print("guidance_loss", guidance_loss)
     print("noise_pred_uncond.shape", noise_pred_uncond.shape)
